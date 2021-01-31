@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+        "jsx": "react",
+        "esModuleInterop": true,
+        "noImplicitAny": true
+    },
+    "includes": ["./src/externals.d.ts"],
+    "exclude": ["./node_modules"]
+}
