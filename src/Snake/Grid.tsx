@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, ReactElement, RefObject } from 'react';
-import { drawCells, drawSnake, drawFood, getMovedSnake, snakeMeetsFood, snakeHasCollisions } from './helpers';
-import { GridProps, CellArgs } from '../types';
+import React, { useMemo, useRef, useState, useEffect, ReactElement, RefObject } from 'react';
+import { drawCells, drawSnake, getFood, drawFood, getMovedSnake, snakeMeetsFood, snakeHasCollisions } from './helpers';
+import { Directions, GridProps, CellArgs } from '../types';
 import css from './Snake.css';
 
 export const Grid = ({
@@ -14,76 +14,86 @@ export const Grid = ({
     speed,
     direction
 }: GridProps): ReactElement => {
-    const cellsPerRow: number = width / cellSize;
-    const cellsPerColumn: number = height / cellSize;
+    const cellsPerRow: number = useMemo(() => width / cellSize, [width, cellSize]);
+    const cellsPerColumn: number = useMemo(() => height / cellSize, [height, cellSize]);
+    const startX: number = useMemo(() => cellsPerRow / 2, [cellsPerRow]);
+    const newSnake: CellArgs[] = useMemo(() => [startX, startX + 1].map(x => ({
+        x: Math.round(x),
+        y: Math.round(cellsPerColumn / 2)
+    })), [startX, cellsPerColumn]);
     const canvasRef: RefObject<HTMLCanvasElement> = useRef<HTMLCanvasElement | null>(null);
 
-    const [snake, setSnake] = useState<CellArgs[]>([]);
+    const [snake, setSnake] = useState<CellArgs[]>(newSnake);
     const [food, setFood] = useState<CellArgs>(null);
+    const [timestamp, setTimestamp] = useState<number>(0);
+    const [previousDirection, setPreviousDirection] = useState<Directions>(direction);
 
     useEffect(() => {
-        if (gameIsOver || gameIsPaused) return;
+        if (!gameIsOver && !gameIsPaused) {
+            let requestId: number;
 
-        if (!snake.length) {
-            const startX: number = cellsPerRow / 2;
-            const newSnake: CellArgs[] = [startX, startX + 1].map(x => ({
-                x: Math.round(x),
-                y: Math.round(cellsPerColumn / 2)
-            }));
+            const tick = (requestTimestamp: number) => {
+                requestId = requestAnimationFrame(tick);
 
-            setSnake(newSnake);
-        }
+                if (requestTimestamp - timestamp > 1000 * (1 / speed)) {
+                    const context: CanvasRenderingContext2D = canvasRef.current.getContext('2d');
+                    let nextDirection: Directions = previousDirection;
 
-        if (food === null && snake.length) {
-            let newFood: CellArgs;
+                    if (
+                        (direction === Directions.Left && previousDirection !== Directions.Right) ||
+                        (direction === Directions.Up && previousDirection !== Directions.Down) ||
+                        (direction === Directions.Right && previousDirection !== Directions.Left) ||
+                        (direction === Directions.Down && previousDirection !== Directions.Up)
+                    ) {
+                        nextDirection = direction;
+                        setPreviousDirection(direction);
+                    }
 
-            do {
-                newFood = {
-                    x: Math.round(Math.random() * (cellsPerRow - 1)),
-                    y: Math.round(Math.random() * (cellsPerColumn - 1))
-                };
-            } while (snake.some((snakeCell: CellArgs) =>
-                snakeCell.x === newFood.x && snakeCell.y === newFood.y)
-            );
+                    updateGrid(nextDirection);
+                    drawGrid(context);
+                    setTimestamp(requestTimestamp);
+                }
+            };
 
-            setFood(newFood);
-        }
+            requestId = requestAnimationFrame(tick);
 
-        const context: CanvasRenderingContext2D = canvasRef.current.getContext('2d');
-        const interval: ReturnType<typeof setInterval> = setInterval(updateGrid, 1000 / speed);
+            return () => cancelAnimationFrame(requestId);
+        };
+    }, [gameIsOver, gameIsPaused, cellSize, speed, direction, snake, food, timestamp, previousDirection]);
 
-        drawGrid(context);
-
-        return () => clearInterval(interval);
-    });
-
-    const updateGrid = (): void => {
+    const updateGrid = (direction: Directions): void => {
         const movedSnake: CellArgs[] = getMovedSnake({ snake, direction, cellsPerRow, cellsPerColumn });
 
-        if (snakeHasCollisions(movedSnake)) {
-            finishGame();
-            setSnake([]);
-            setFood(null);
+        if (food === null) {
+            const newFood: CellArgs = getFood({ snake: movedSnake, cellsPerRow, cellsPerColumn });
 
-            return;
+            setFood(newFood);
+        } else {
+            if (snakeHasCollisions(movedSnake)) {
+                finishGame();
+                setSnake(newSnake);
+                setFood(null);
+    
+                return;
+            }
+    
+            if (snakeMeetsFood({ snake: movedSnake, food })) {
+                setSnake(prevSnake => [food, ...prevSnake]);
+                setFood(null);
+                updateScore();
+    
+                return;
+            }
+    
+            setSnake(movedSnake);
         }
-
-        if (snakeMeetsFood({ snake: movedSnake, food })) {
-            setSnake(prevSnake => [food, ...prevSnake]);
-            setFood(null);
-            updateScore();
-
-            return;
-        }
-
-        setSnake(movedSnake);
     };
 
     const drawGrid = (context: CanvasRenderingContext2D): void => {
         context.clearRect(0, 0, width, height);
         drawCells({ context, cellSize, cellsPerRow, cellsPerColumn });
         drawSnake({ context, cellSize, snake });
-        drawFood({ context, cellSize, food });
+        food && drawFood({ context, cellSize, food });
     };
 
     if (gameIsOver) {

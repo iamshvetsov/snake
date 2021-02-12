@@ -27,31 +27,28 @@ export const SnakeApp = (): ReactElement => {
             return;
         }
 
-        if (
-            (code === Directions.Left && direction === Directions.Right) ||
-            (code === Directions.Up && direction === Directions.Down) ||
-            (code === Directions.Right && direction === Directions.Left) ||
-            (code === Directions.Down && direction === Directions.Up)
-        ) return;
-
-        setDirection(code);
+        switch (code) {
+        case Directions.Left:
+            if (direction !== Directions.Left && direction !== Directions.Right) setDirection(Directions.Left);
+            break;
+        case Directions.Up:
+            if (direction !== Directions.Up && direction !== Directions.Down) setDirection(Directions.Up);
+            break;
+        case Directions.Right:
+            if (direction !== Directions.Right && direction !== Directions.Left) setDirection(Directions.Right);
+            break;
+        case Directions.Down:
+            if (direction !== Directions.Down && direction !== Directions.Up) setDirection(Directions.Down);
+            break;
+        default:
+            return;
+        }
     };
 
     useEffect(() => {
-        let timeout: ReturnType<typeof setTimeout>;
+        window.addEventListener('keydown', keydownHandler);
 
-        const throttle = (func: Function, delay: number): Function => (...args: any): void => {
-            timeout = setTimeout(() => func(...args), delay);
-        };
-
-        const throttledKeydownHandler: any = throttle(keydownHandler, 1000 / speed);
-
-        window.addEventListener('keydown', throttledKeydownHandler);
-
-        return () => {
-            window.removeEventListener('keydown', throttledKeydownHandler);
-            clearTimeout(timeout);
-        };
+        return () => window.removeEventListener('keydown', keydownHandler);
     }, [gameIsOver, direction]);
 
     const finishGame = (): void => {

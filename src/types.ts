@@ -42,6 +42,8 @@ type SnakeType = {
 
 export type DrawSnakeArgs = ContextArgs & SnakeType;
 
+export type GetFoodArgs = SnakeType & CellsPerType;
+
 type FoodType = {
     food: CellArgs;
 };

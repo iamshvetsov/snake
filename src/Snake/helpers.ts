@@ -4,6 +4,7 @@ import {
     DrawCellArgs,
     DrawCellsArgs,
     DrawSnakeArgs,
+    GetFoodArgs,
     DrawFoodArgs,
     MoveSnakeArgs,
     SnakeMeetsFoodArgs
@@ -30,15 +31,22 @@ const fillCell = ({ context, cellSize, x, y }: DrawCellArgs): void => {
 };
 
 export const drawSnake = ({ context, cellSize, snake }: DrawSnakeArgs): void => {
-    if (!snake.length) return;
-
     context.fillStyle = '#999';
     snake.forEach(({ x, y }: CellArgs) => fillCell({ context, cellSize, x, y }));
 };
 
-export const drawFood = ({ context, cellSize, food }: DrawFoodArgs): void => {
-    if (!food) return;
+export const getFood = ({ snake, cellsPerRow, cellsPerColumn }: GetFoodArgs): CellArgs => {
+    const newFood: CellArgs = {
+        x: Math.round(Math.random() * (cellsPerRow - 1)),
+        y: Math.round(Math.random() * (cellsPerColumn - 1))
+    };
 
+    return snake.some((snakeCell: CellArgs) => snakeCell.x === newFood.x && snakeCell.y === newFood.y)
+        ? getFood({ snake, cellsPerRow, cellsPerColumn })
+        : newFood;
+};
+
+export const drawFood = ({ context, cellSize, food }: DrawFoodArgs): void => {
     context.fillStyle = '#090';
     fillCell({ context, cellSize, x: food.x, y: food.y });
 };
