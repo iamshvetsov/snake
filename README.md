@@ -1,4 +1,5 @@
 # react-snake
+
 react snake using canvas
 
 ![demo](demo.gif)

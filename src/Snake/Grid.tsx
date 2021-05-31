@@ -17,16 +17,24 @@ export const Grid = ({
     const cellsPerRow: number = useMemo(() => width / cellSize, [width, cellSize]);
     const cellsPerColumn: number = useMemo(() => height / cellSize, [height, cellSize]);
     const startX: number = useMemo(() => cellsPerRow / 2, [cellsPerRow]);
-    const newSnake: CellArgs[] = useMemo(() => [startX, startX + 1].map(x => ({
+    const newSnake: CellArgs[] = useMemo(() => [startX, startX + 1].map((x) => ({
         x: Math.round(x),
         y: Math.round(cellsPerColumn / 2)
     })), [startX, cellsPerColumn]);
     const canvasRef: RefObject<HTMLCanvasElement> = useRef<HTMLCanvasElement | null>(null);
+    let context: CanvasRenderingContext2D;
 
     const [snake, setSnake] = useState<CellArgs[]>(newSnake);
     const [food, setFood] = useState<CellArgs>(null);
     const [timestamp, setTimestamp] = useState<number>(0);
     const [previousDirection, setPreviousDirection] = useState<Directions>(direction);
+
+    useEffect(() => {
+        if (!gameIsOver && !gameIsPaused) {
+            context = canvasRef.current.getContext('2d');
+            context.scale(2, 2); // retina display fix
+        }
+    }, [gameIsOver, gameIsPaused]);
 
     useEffect(() => {
         if (!gameIsOver && !gameIsPaused) {
@@ -36,7 +44,7 @@ export const Grid = ({
                 requestId = requestAnimationFrame(tick);
 
                 if (requestTimestamp - timestamp > 1000 * (1 / speed)) {
-                    const context: CanvasRenderingContext2D = canvasRef.current.getContext('2d');
+                    context = canvasRef.current.getContext('2d');
                     let nextDirection: Directions = previousDirection;
 
                     if (
@@ -58,7 +66,7 @@ export const Grid = ({
             requestId = requestAnimationFrame(tick);
 
             return () => cancelAnimationFrame(requestId);
-        };
+        }
     }, [gameIsOver, gameIsPaused, cellSize, speed, direction, snake, food, timestamp, previousDirection]);
 
     const updateGrid = (direction: Directions): void => {
@@ -67,24 +75,24 @@ export const Grid = ({
         if (food === null) {
             const newFood: CellArgs = getFood({ snake: movedSnake, cellsPerRow, cellsPerColumn });
 
+            if (snake !== newSnake) updateScore();
             setFood(newFood);
         } else {
             if (snakeHasCollisions(movedSnake)) {
                 finishGame();
                 setSnake(newSnake);
                 setFood(null);
-    
+
                 return;
             }
-    
+
             if (snakeMeetsFood({ snake: movedSnake, food })) {
-                setSnake(prevSnake => [food, ...prevSnake]);
+                setSnake((prevSnake) => [food, ...prevSnake]);
                 setFood(null);
-                updateScore();
-    
+
                 return;
             }
-    
+
             setSnake(movedSnake);
         }
     };
@@ -108,5 +116,5 @@ export const Grid = ({
         </div>;
     }
 
-    return <canvas ref={canvasRef} className={css.canvas} width={width} height={height} />;
+    return <canvas ref={canvasRef} className={css.canvas} width={width * 2} height={height * 2} />;
 };

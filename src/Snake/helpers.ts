@@ -55,10 +55,18 @@ export const getMovedSnake = ({ snake, direction, cellsPerRow, cellsPerColumn }:
     const snakeHead: CellArgs = { ...snake[0] };
 
     switch (direction) {
-    case Directions.Left: snakeHead.x--; break;
-    case Directions.Up: snakeHead.y--; break;
-    case Directions.Right: snakeHead.x++; break;
-    case Directions.Down: snakeHead.y++; break;
+        case Directions.Left:
+            snakeHead.x--;
+            break;
+        case Directions.Up:
+            snakeHead.y--;
+            break;
+        case Directions.Right:
+            snakeHead.x++;
+            break;
+        case Directions.Down:
+            snakeHead.y++;
+            break;
     }
 
     if (snakeHead.x >= cellsPerRow) snakeHead.x = 0;
@@ -79,6 +87,5 @@ export const snakeHasCollisions = (snake: CellArgs[]): boolean => {
     const snakeHead: CellArgs = snake[0];
     const snakeWithoutHead: CellArgs[] = [...snake.slice(1, snake.length)];
 
-    return Boolean(snakeWithoutHead.find(({ x, y }: CellArgs) =>
-        x === snakeHead.x && y === snakeHead.y));
+    return Boolean(snakeWithoutHead.find(({ x, y }: CellArgs) => x === snakeHead.x && y === snakeHead.y));
 };

@@ -22,26 +22,26 @@ export const SnakeApp = (): ReactElement => {
                 setDirection(Directions.Left);
             }
 
-            setGameIsPaused(prevGameIsPaused => !prevGameIsPaused);
+            setGameIsPaused((prevGameIsPaused) => !prevGameIsPaused);
 
             return;
         }
 
         switch (code) {
-        case Directions.Left:
-            if (direction !== Directions.Left && direction !== Directions.Right) setDirection(Directions.Left);
-            break;
-        case Directions.Up:
-            if (direction !== Directions.Up && direction !== Directions.Down) setDirection(Directions.Up);
-            break;
-        case Directions.Right:
-            if (direction !== Directions.Right && direction !== Directions.Left) setDirection(Directions.Right);
-            break;
-        case Directions.Down:
-            if (direction !== Directions.Down && direction !== Directions.Up) setDirection(Directions.Down);
-            break;
-        default:
-            return;
+            case Directions.Left:
+                if (direction !== Directions.Left && direction !== Directions.Right) setDirection(Directions.Left);
+                break;
+            case Directions.Up:
+                if (direction !== Directions.Up && direction !== Directions.Down) setDirection(Directions.Up);
+                break;
+            case Directions.Right:
+                if (direction !== Directions.Right && direction !== Directions.Left) setDirection(Directions.Right);
+                break;
+            case Directions.Down:
+                if (direction !== Directions.Down && direction !== Directions.Up) setDirection(Directions.Down);
+                break;
+            default:
+                return;
         }
     };
 
@@ -56,7 +56,7 @@ export const SnakeApp = (): ReactElement => {
         setGameIsPaused(true);
     };
 
-    const updateScore = (): void => setScore(prevScore => prevScore + speed);
+    const updateScore = (): void => setScore((prevScore) => prevScore + speed);
 
     const cellSizeHandler = (e: ChangeEvent<HTMLInputElement>): void => {
         const cellSize: number = +e.target.value;
